@@ -136,6 +136,8 @@ public class AndroidWindowTools extends CordovaPlugin
             		json.put("top", top);
             		json.put("right", right);
             		json.put("bottom", bottom);
+            		json.put("dens", dens);
+            		json.put("cutoutExists", cutout != null ? true : false);
 
 					context.sendPluginResult(new PluginResult(PluginResult.Status.OK, json));
 				}
