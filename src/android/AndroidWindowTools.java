@@ -144,8 +144,8 @@ public class AndroidWindowTools extends CordovaPlugin
             		json.put("getStatusBarHeight", getStatusBarHeight());
             		json.put("cutoutExists", cutout != null ? true : false);
 					json.put("hasSoftwareKeys", hasSoftwareKeys());
-					json.put("realDisplayHeight", realDisplayHeight)
-					json.put("heightPixels", heightPixels)
+					json.put("realDisplayHeight", realDisplayHeight);
+					json.put("heightPixels", heightPixels);
 					context.sendPluginResult(new PluginResult(PluginResult.Status.OK, json));
 				}
 				catch (Exception e)
@@ -175,7 +175,7 @@ public class AndroidWindowTools extends CordovaPlugin
 			int screenHeight = activity.getResources().getDisplayMetrics().heightPixels;             
 			return screenHeight > realDisplayHeight;         
 		//}         
-		return false;    
+		//return false;    
 	}
 	private boolean getSoftwareKeys()
 	{
