@@ -131,14 +131,21 @@ public class AndroidWindowTools extends CordovaPlugin
                     float right = cutout != null ? (cutout.getSafeInsetRight() * dens) : 0; 
                     float top = cutout != null ? (cutout.getSafeInsetTop() * dens) : 0; 
             
+					 WindowManager windowManager = activity.getWindowManager();         
+		 			 Display display = windowManager.getDefaultDisplay();         
+		 			int realDisplayHeight = display.getHeight(); 
+					int heightPixels = activity.getResources().getDisplayMetrics().heightPixels;   
 					JSONObject json = new JSONObject();
             		json.put("left", left);
             		json.put("top", top);
             		json.put("right", right);
             		json.put("bottom", bottom);
             		json.put("dens", dens);
+            		json.put("getStatusBarHeight", getStatusBarHeight());
             		json.put("cutoutExists", cutout != null ? true : false);
-
+					json.put("hasSoftwareKeys", hasSoftwareKeys());
+					json.put("realDisplayHeight", realDisplayHeight)
+					json.put("heightPixels", heightPixels)
 					context.sendPluginResult(new PluginResult(PluginResult.Status.OK, json));
 				}
 				catch (Exception e)
@@ -150,7 +157,26 @@ public class AndroidWindowTools extends CordovaPlugin
 		
 		return true;
 	}
+	private int getStatusBarHeight() {
+		int result = 0;
+		int resourceId = activity.getResources().getIdentifier("status_bar_height", "dimen", "android");
+		if (resourceId > 0) {
+			result = activity.getResources().getDimensionPixelSize(resourceId);
+		}
+		return result;
+	}
 
+	private boolean hasSoftwareKeys() {        
+		 WindowManager windowManager = activity.getWindowManager();         
+		 Display display = windowManager.getDefaultDisplay();         
+		 int realDisplayHeight = display.getHeight();         
+		 //DisplayCutout displayCutout = display.getCutout();         
+		 //if (displayCutout == null) {             
+			int screenHeight = activity.getResources().getDisplayMetrics().heightPixels;             
+			return screenHeight > realDisplayHeight;         
+		//}         
+		return false;    
+	}
 	private boolean getSoftwareKeys()
 	{
         if(Build.VERSION.SDK_INT < 21) {
