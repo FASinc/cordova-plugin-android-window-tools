@@ -20,15 +20,17 @@ import android.os.Build;
 import android.os.Handler;
 import android.view.Display;
 import android.view.DisplayCutout;
+import android.view.KeyCharacterMap;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
-import android.util.DisplayMetrics; 
+import android.util.DisplayMetrics;
 
 public class AndroidWindowTools extends CordovaPlugin
 {
-    private static final String TAG = "AndroidWindowTools";
+	private static final String TAG = "AndroidWindowTools";
 
 	public static final String ACTION_SET_NAVIGATION_BAR_COLOR = "setNavigationBarColor";
 	public static final String ACTION_SET_STATUS_BAR_COLOR = "setStatusBarColor";
@@ -45,25 +47,25 @@ public class AndroidWindowTools extends CordovaPlugin
 	private Activity activity;
 	private Window window;
 	private View decorView;
-	
-	/**
-     * Sets the context of the Command. This can then be used to do things like
-     * get file paths associated with the Activity.
-     *
-     * @param cordova The context of the main Activity.
-     * @param webView The CordovaWebView Cordova is running in.
-     */
-    @Override
-    public void initialize(final CordovaInterface cordova, final CordovaWebView webView) {
-        LOG.v(TAG, "AndroidWindowTools: initialization");
-        super.initialize(cordova, webView);
 
-        this.cordova.getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // Clear flag FLAG_FORCE_NOT_FULLSCREEN which is set initially
-                // by the Cordova.
-                final Window window = cordova.getActivity().getWindow();
+	/**
+	 * Sets the context of the Command. This can then be used to do things like
+	 * get file paths associated with the Activity.
+	 *
+	 * @param cordova The context of the main Activity.
+	 * @param webView The CordovaWebView Cordova is running in.
+	 */
+	@Override
+	public void initialize(final CordovaInterface cordova, final CordovaWebView webView) {
+		LOG.v(TAG, "AndroidWindowTools: initialization");
+		super.initialize(cordova, webView);
+
+		this.cordova.getActivity().runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				// Clear flag FLAG_FORCE_NOT_FULLSCREEN which is set initially
+				// by the Cordova.
+				final Window window = cordova.getActivity().getWindow();
 				window.clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
 			}
 		});
@@ -109,46 +111,49 @@ public class AndroidWindowTools extends CordovaPlugin
 
 	private boolean getDisplayCutout()
 	{
-        if(Build.VERSION.SDK_INT < 28) {
-            // DisplayCutout is not available on api < 28
-            context.sendPluginResult(new PluginResult(PluginResult.Status.OK, 0));
-            return true;
-        }
+		if(Build.VERSION.SDK_INT < 28) {
+			// DisplayCutout is not available on api < 28
+			context.sendPluginResult(new PluginResult(PluginResult.Status.OK, 0));
+			return true;
+		}
 
 		activity.runOnUiThread(new Runnable()
 		{
 			@Override
-			public void run() 
+			public void run()
 			{
 				try
 				{
-                    final WindowInsets insets = getInsets();
-                    final DisplayCutout cutout = insets.getDisplayCutout();
-            
-                    float dens = 1 / activity.getResources().getDisplayMetrics().density;
-                    float bottom = cutout != null ? (cutout.getSafeInsetBottom() * dens) : 0; 
-                    float left = cutout != null ? (cutout.getSafeInsetLeft() * dens) : 0; 
-                    float right = cutout != null ? (cutout.getSafeInsetRight() * dens) : 0; 
-                    float top = cutout != null ? (cutout.getSafeInsetTop() * dens) : 0; 
-					boolean hasMenuKey = ViewConfiguration.get(context).hasPermanentMenuKey();
+					final WindowInsets insets = getInsets();
+					final DisplayCutout cutout = insets.getDisplayCutout();
+
+					float dens = 1 / activity.getResources().getDisplayMetrics().density;
+					float bottom = cutout != null ? (cutout.getSafeInsetBottom() * dens) : 0;
+					float left = cutout != null ? (cutout.getSafeInsetLeft() * dens) : 0;
+					float right = cutout != null ? (cutout.getSafeInsetRight() * dens) : 0;
+					float top = cutout != null ? (cutout.getSafeInsetTop() * dens) : 0;
+
+					// Initialize KeyCharacterMap and KeyEvent classes
+					KeyCharacterMap keyCharacterMap = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);
+					boolean hasHomeKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_HOME);
 					boolean hasBackKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_BACK);
-            
-					 WindowManager windowManager = activity.getWindowManager();         
-		 			 Display display = windowManager.getDefaultDisplay();         
-		 			int realDisplayHeight = display.getHeight(); 
-					int heightPixels = activity.getResources().getDisplayMetrics().heightPixels;   
+
+					WindowManager windowManager = activity.getWindowManager();
+					Display display = windowManager.getDefaultDisplay();
+					int realDisplayHeight = display.getHeight();
+					int heightPixels = activity.getResources().getDisplayMetrics().heightPixels;
 					JSONObject json = new JSONObject();
-            		json.put("left", left);
-            		json.put("top", top);
-            		json.put("right", right);
-            		json.put("bottom", bottom);
-            		json.put("dens", dens);
-            		json.put("getStatusBarHeight", getStatusBarHeight());
-            		json.put("cutoutExists", cutout != null ? true : false);
+					json.put("left", left);
+					json.put("top", top);
+					json.put("right", right);
+					json.put("bottom", bottom);
+					json.put("dens", dens);
+					json.put("getStatusBarHeight", getStatusBarHeight());
+					json.put("cutoutExists", cutout != null ? true : false);
 					json.put("hasSoftwareKeys", hasSoftwareKeys());
 					json.put("realDisplayHeight", realDisplayHeight);
 					json.put("heightPixels", heightPixels);
-					json.put("hasMenuKey", hasMenuKey);
+					json.put("hasHomeKey", hasHomeKey);
 					json.put("hasBackKey", hasBackKey);
 					context.sendPluginResult(new PluginResult(PluginResult.Status.OK, json));
 				}
@@ -158,7 +163,7 @@ public class AndroidWindowTools extends CordovaPlugin
 				}
 			}
 		});
-		
+
 		return true;
 	}
 	private int getStatusBarHeight() {
@@ -170,55 +175,68 @@ public class AndroidWindowTools extends CordovaPlugin
 		return result;
 	}
 
-	private boolean hasSoftwareKeys() {        
-		 WindowManager windowManager = activity.getWindowManager();         
-		 Display display = windowManager.getDefaultDisplay();         
-		 int realDisplayHeight = display.getHeight();         
-		 //DisplayCutout displayCutout = display.getCutout();         
-		 //if (displayCutout == null) {             
-			int screenHeight = activity.getResources().getDisplayMetrics().heightPixels;             
-			return screenHeight > realDisplayHeight;         
-		//}         
-		//return false;    
+	private boolean hasSoftwareKeys() {
+		boolean hasHomeKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_HOME);
+		boolean hasBackKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_BACK);
+
+		if (hasBackKey && hasHomeKey) {
+			// no navigation bar, unless it is enabled in the settings
+			return false;
+		} else {
+			// 99% sure there's a navigation bar
+			return true;
+		}
 	}
+
+//	private boolean hasSoftwareKeys() {
+//		WindowManager windowManager = activity.getWindowManager();
+//		Display display = windowManager.getDefaultDisplay();
+//		int realDisplayHeight = display.getHeight();
+//		//DisplayCutout displayCutout = display.getCutout();
+//		//if (displayCutout == null) {
+//		int screenHeight = activity.getResources().getDisplayMetrics().heightPixels;
+//		return screenHeight > realDisplayHeight;
+//		//}
+//		//return false;
+//	}
 	private boolean getSoftwareKeys()
 	{
-        if(Build.VERSION.SDK_INT < 21) {
-            context.sendPluginResult(new PluginResult(PluginResult.Status.OK, 0));
-            return true;
-        }
+		if(Build.VERSION.SDK_INT < 21) {
+			context.sendPluginResult(new PluginResult(PluginResult.Status.OK, 0));
+			return true;
+		}
 
 		activity.runOnUiThread(new Runnable()
 		{
 			@Override
-			public void run() 
+			public void run()
 			{
 				try
 				{
 					Display d = decorView.getDisplay();
-	
+
 					DisplayMetrics realDisplayMetrics = new DisplayMetrics();
 					d.getRealMetrics(realDisplayMetrics);
-	
+
 					int realHeight = realDisplayMetrics.heightPixels;
 					int realWidth = realDisplayMetrics.widthPixels;
-	
+
 					DisplayMetrics displayMetrics = new DisplayMetrics();
 					d.getMetrics(displayMetrics);
-	
+
 					int displayHeight = displayMetrics.heightPixels;
 					int displayWidth = displayMetrics.widthPixels;
-	
-					context.sendPluginResult(new PluginResult(PluginResult.Status.OK, 
-                      (realWidth - displayWidth) > 0 || (realHeight - displayHeight) > 0));
-				} 
+
+					context.sendPluginResult(new PluginResult(PluginResult.Status.OK,
+							(realWidth - displayWidth) > 0 || (realHeight - displayHeight) > 0));
+				}
 				catch (Exception e)
 				{
 					context.error(e.getMessage());
 				}
 			}
 		});
-		
+
 		return true;
 	}
 
@@ -235,8 +253,8 @@ public class AndroidWindowTools extends CordovaPlugin
 					decorView.getDisplay().getRealSize(outSize);
 
 					JSONObject json = new JSONObject();
-            		json.put("width", outSize.x);
-            		json.put("height", outSize.y);
+					json.put("width", outSize.x);
+					json.put("height", outSize.y);
 
 					context.sendPluginResult(new PluginResult(PluginResult.Status.OK, json));
 				} catch (final Exception e) {
@@ -249,32 +267,32 @@ public class AndroidWindowTools extends CordovaPlugin
 	}
 
 	private boolean getRealMetrics() {
-        if(Build.VERSION.SDK_INT < 21) {
-            context.sendPluginResult(new PluginResult(PluginResult.Status.OK, 0));
-            return true;
-        }
+		if(Build.VERSION.SDK_INT < 21) {
+			context.sendPluginResult(new PluginResult(PluginResult.Status.OK, 0));
+			return true;
+		}
 
 		activity.runOnUiThread(new Runnable()
 		{
 			@Override
-			public void run() 
+			public void run()
 			{
 				try
 				{
 					Display d = decorView.getDisplay();
-	
+
 					DisplayMetrics realDisplayMetrics = new DisplayMetrics();
 					d.getRealMetrics(realDisplayMetrics);
-	
+
 					int realHeight = realDisplayMetrics.heightPixels;
 					int realWidth = realDisplayMetrics.widthPixels;
-	
+
 					JSONObject json = new JSONObject();
-            		json.put("width", realWidth);
-            		json.put("height", realHeight);
-	
+					json.put("width", realWidth);
+					json.put("height", realHeight);
+
 					context.sendPluginResult(new PluginResult(PluginResult.Status.OK, json));
-				} 
+				}
 				catch (Exception e)
 				{
 					context.error(e.getMessage());
@@ -286,32 +304,32 @@ public class AndroidWindowTools extends CordovaPlugin
 	}
 
 	private boolean getMetrics() {
-        if(Build.VERSION.SDK_INT < 21) {
-            context.sendPluginResult(new PluginResult(PluginResult.Status.OK, 0));
-            return true;
-        }
+		if(Build.VERSION.SDK_INT < 21) {
+			context.sendPluginResult(new PluginResult(PluginResult.Status.OK, 0));
+			return true;
+		}
 
 		activity.runOnUiThread(new Runnable()
 		{
 			@Override
-			public void run() 
+			public void run()
 			{
 				try
 				{
 					Display d = decorView.getDisplay();
-	
+
 					DisplayMetrics realDisplayMetrics = new DisplayMetrics();
 					d.getMetrics(realDisplayMetrics);
-	
+
 					int realHeight = realDisplayMetrics.heightPixels;
 					int realWidth = realDisplayMetrics.widthPixels;
-	
+
 					JSONObject json = new JSONObject();
-            		json.put("width", realWidth);
-            		json.put("height", realHeight);
-	
+					json.put("width", realWidth);
+					json.put("height", realHeight);
+
 					context.sendPluginResult(new PluginResult(PluginResult.Status.OK, json));
-				} 
+				}
 				catch (Exception e)
 				{
 					context.error(e.getMessage());
@@ -341,7 +359,7 @@ public class AndroidWindowTools extends CordovaPlugin
 
 		return true;
 	}
-    
+
 	private boolean addWindowFlags(final int flags) {
 		activity.runOnUiThread(new Runnable() {
 			@Override
@@ -394,12 +412,12 @@ public class AndroidWindowTools extends CordovaPlugin
 					}
 				});
 			}
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	private boolean setNavigationBarBackgroundColor(final String colorPref) {
@@ -415,21 +433,21 @@ public class AndroidWindowTools extends CordovaPlugin
 						} catch (final IllegalArgumentException ignore) {
 							LOG.e(TAG, "Invalid hexString argument, use f.i. '#999999'");
 						} catch (final Exception ignore) {
-        		            LOG.w(TAG, "Method window.setNavigationBarColor not found for SDK level " + Build.VERSION.SDK_INT);
+							LOG.w(TAG, "Method window.setNavigationBarColor not found for SDK level " + Build.VERSION.SDK_INT);
 						}
 					}
 				});
-            }
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
+			}
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 
-    @TargetApi(23)
-    private WindowInsets getInsets() {
-        return this.webView.getView().getRootWindowInsets();
-    }
+	@TargetApi(23)
+	private WindowInsets getInsets() {
+		return this.webView.getView().getRootWindowInsets();
+	}
 }
