@@ -130,6 +130,8 @@ public class AndroidWindowTools extends CordovaPlugin
                     float left = cutout != null ? (cutout.getSafeInsetLeft() * dens) : 0; 
                     float right = cutout != null ? (cutout.getSafeInsetRight() * dens) : 0; 
                     float top = cutout != null ? (cutout.getSafeInsetTop() * dens) : 0; 
+					boolean hasMenuKey = ViewConfiguration.get(context).hasPermanentMenuKey();
+					boolean hasBackKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_BACK);
             
 					 WindowManager windowManager = activity.getWindowManager();         
 		 			 Display display = windowManager.getDefaultDisplay();         
@@ -146,6 +148,8 @@ public class AndroidWindowTools extends CordovaPlugin
 					json.put("hasSoftwareKeys", hasSoftwareKeys());
 					json.put("realDisplayHeight", realDisplayHeight);
 					json.put("heightPixels", heightPixels);
+					json.put("hasMenuKey", hasMenuKey);
+					json.put("hasBackKey", hasBackKey);
 					context.sendPluginResult(new PluginResult(PluginResult.Status.OK, json));
 				}
 				catch (Exception e)
