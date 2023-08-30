@@ -149,6 +149,7 @@ public class AndroidWindowTools extends CordovaPlugin
 					json.put("bottom", bottom);
 					json.put("dens", dens);
 					json.put("getStatusBarHeight", getStatusBarHeight());
+					json.put("getNavigationBarHeight", getNavigationBarHeight());
 					json.put("cutoutExists", cutout != null ? true : false);
 					json.put("hasSoftwareKeys", hasSoftwareKeys());
 					json.put("realDisplayHeight", realDisplayHeight);
@@ -178,14 +179,24 @@ public class AndroidWindowTools extends CordovaPlugin
 	private boolean hasSoftwareKeys() {
 		boolean hasHomeKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_HOME);
 		boolean hasBackKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_BACK);
+		int navBarResourceId = activity.getResources().getIdentifier("config_showNavigationBar", "bool", "android");
 
-		if (hasBackKey && hasHomeKey) {
+		if (hasBackKey && hasHomeKey && !(navBarResourceId > 0 && activity.getResources().getBoolean(navBarResourceId))) {
 			// no navigation bar, unless it is enabled in the settings
 			return false;
 		} else {
 			// 99% sure there's a navigation bar
 			return true;
 		}
+	}
+
+	private int getNavigationBarHeight() {
+		int result = 0;
+		int resourceId = activity.getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+		if (resourceId > 0) {
+			result = activity.getResources().getDimensionPixelSize(resourceId);
+		}
+		return result;
 	}
 
 //	private boolean hasSoftwareKeys() {
